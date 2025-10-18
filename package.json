@@ -1,0 +1,26 @@
+{
+  "name": "koa-wsapi",
+  "type": "module",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "",
+  "license": "MIT",
+  "description": "",
+  "scripts": {
+    "lint": "npx eslint src client/src example/*.js example/client/*.js --fix; npx prettier src client/src example/*.js example/client/*.js --single-quote --write"
+  },
+  "devDependencies": {
+    "eslint": "^9.38.0",
+    "koa": "^3.0.2",
+    "koa-easy-ws": "^2.1.0",
+    "koa-static": "^5.0.0",
+    "prettier": "^3.6.2",
+    "tweetnacl": "^1.0.3"
+  },
+  "dependencies": {
+    "fp-ts": "^2.16.11",
+    "io-ts": "^2.2.22",
+    "lodash": "^4.17.21",
+    "msgpack5": "^6.0.2"
+  }
+}

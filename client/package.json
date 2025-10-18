@@ -1,0 +1,16 @@
+{
+  "name": "koa-wsapi-client",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "description": "",
+  "dependencies": {
+    "msgpack5": "^6.0.2",
+    "reconnecting-websocket": "^4.4.0",
+    "uuid": "^13.0.0"
+  }
+}
