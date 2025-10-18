@@ -13,8 +13,18 @@ In particular, on the server, make a folder for your actions, and then use this 
 
 ```javascript
 import * as t from 'io-ts';
-// custom type
-import { enthusiasm } from '../types.js';
+
+// see the io-ts docs for info about how to make more useful custom types
+function isEnthusiasm(input) {
+  return [1, 2, 3].includes(input);
+}
+export const enthusiasm = new t.Type(
+  'enthusiasm',
+  isEnthusiasm,
+  (input, context) =>
+    isEnthusiasm(input) ? t.success(input) : t.failure(input, context),
+  t.identity,
+);
 
 export const arg = t.type({
   name: t.string,
@@ -59,20 +69,26 @@ const api = start({
   log: console,
 });
 
-// optional to cache responses/share between tabs
+// optional to cache responses or share them between tabs
 api.hello.memoize();
-
-console.log(await api.hello({ name: 'world', enthusiasm: 2 }));
 ```
 
 and a shared worker:
 
 ```javascript
 onconnect = apiWorker({
-  // should probably perist the key in localStorage or something to be any use
+  // should probably persist the key in localStorage or something to be any use
   transport: signedMsgpack(sign.keyPair()),
   // this is the default
   url: location.origin.replace(/^http/, 'ws'),
   log: console,
 });
+```
+
+after which:
+```javascript
+await api.hello({ name: 'world', enthusiasm: 2 });
+// {"message":"Hello, world! (and hello, 9VEllJ9pbQeaP4dFgffFqxUnv1OVvm8CS3kFCU68ZPQ=!)"}
+await api.hello({ enthusiasm: 4 });
+// {"error":["Invalid value undefined supplied to : { name: string, enthusiasm: enthusiasm }/name: string","Invalid value 4 supplied to : { name: string, enthusiasm: enthusiasm }/enthusiasm: enthusiasm"]}
 ```
