@@ -19,6 +19,7 @@ addEventListener('DOMContentLoaded', async () => {
     ['hello', { name: 'everybody', enthusiasm: 10 }],
     ['hello', { name: 'everybody', enthusiasm: 3 }],
     ['hello', { name: 'everybody', enthusiasm: 3 }],
+    ['hello', { enthusiasm: 4 }],
   ]) {
     let response;
     try {

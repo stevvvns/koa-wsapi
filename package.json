@@ -7,6 +7,7 @@
   "license": "MIT",
   "description": "",
   "scripts": {
+    "build": "npx esbuild --bundle --format=esm --platform=node --outdir=dist/ --minify src/index.js src/transports/*.js; npx esbuild --bundle --format=esm --platform=browser --outdir=dist/client --minify client/src/*.js client/src/transports/*.js",
     "lint": "npx eslint src client/src example/*.js example/client/*.js --fix; npx prettier src client/src example/*.js example/client/*.js --single-quote --write"
   },
   "devDependencies": {
