@@ -1,7 +1,37 @@
 import start from '../../client/src';
 const api = start({
-  // default
+  // this is the default
   worker: './worker.mjs',
   log: console,
 });
-document.body.innerText = (await api.hello({ name: 'world' })).message;
+
+// optional to cache responses/share between tabs
+api.hello.memoize();
+
+addEventListener('DOMContentLoaded', async () => {
+  const dl = document.createElement('dl');
+  dl.style.fontFamily = 'monospace';
+  document.body.appendChild(dl);
+  for (const [mtd, arg] of [
+    ['hi', { name: 'world', enthusiasm: 1 }],
+    ['hello', { name: 'world', enthusiasm: 1 }],
+    ['hello', { enthusiasm: 1 }],
+    ['hello', { name: 'everybody', enthusiasm: 10 }],
+    ['hello', { name: 'everybody', enthusiasm: 3 }],
+    ['hello', { name: 'everybody', enthusiasm: 3 }],
+  ]) {
+    let response;
+    try {
+      response = await api[mtd](arg);
+    } catch (error) {
+      response = { error };
+    }
+    const dt = document.createElement('dt');
+    const dd = document.createElement('dd');
+    dd.style.marginBottom = '1em';
+    dt.textContent = `api.${mtd}(${JSON.stringify(arg)})`;
+    dd.textContent = JSON.stringify(response);
+    dl.appendChild(dt);
+    dl.appendChild(dd);
+  }
+});

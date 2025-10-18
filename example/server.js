@@ -15,7 +15,9 @@ app.context.actionsContext = { greeting: 'Hello' };
 await attachActions({
   app,
   path: resolve('actions'),
+  // you can omit this, provide an entire console-like object, or provide only the log levels you want to see
   log: { info: console.info, error: console.error },
+  // by default this uses msgpack, you can use signed msgpack if it's useful to you to have unique identifiers for each client
   transport: signedMsgpack,
 });
 

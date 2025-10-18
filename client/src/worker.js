@@ -5,20 +5,37 @@ let transport = msgpack;
 let connected;
 
 const inFlight = {};
+const cache = {};
 function wsMessage({ data }) {
   const [msgId, response] = transport.decode(data);
-  console.log({ msgId, response, inFlight });
   if (msgId in inFlight) {
     inFlight[msgId].port.postMessage([msgId, response]);
     delete inFlight[msgId];
   }
+  if (msgId in cache) {
+    cache[cache[msgId].mtd][cache[msgId].key] = response;
+    delete cache[msgId];
+  }
 }
 
 const actions = {
-  async call({ msgId, mtd, arg }, port, sock) {
-    console.log('call', mtd, arg);
+  async call({ msgId, mtd, arg }, port, sock, log) {
+    if (mtd in cache) {
+      const key = msgpack.encode(arg).toBase64();
+      if (key in cache[mtd]) {
+        log?.debug('cache hit', msgId);
+        port.postMessage([msgId, cache[mtd][key]]);
+        return;
+      }
+      cache[msgId] = { mtd, key };
+    }
     inFlight[msgId] = { port, mtd, arg };
     sock.send(transport.encode([msgId, mtd, arg]));
+  },
+  memoize(mtd) {
+    if (!cache[mtd]) {
+      cache[mtd] = {};
+    }
   },
 };
 
@@ -32,18 +49,16 @@ function connect(url, log) {
   function reset() {
     connected = new Promise((resolve) =>
       sock.addEventListener('open', () => {
-        log?.info('ws connected');
         resolve(sock);
-        for (const { port, mtd, arg } of Object.values(inFlight)) {
-          console.log('timeout retry', mtd);
-          actions.call({ mtd, arg }, port, sock);
+        for (const [msgId, { port, mtd, arg }] of Object.entries(inFlight)) {
+          log?.info(`retrying in-flight ${msgId}`);
+          actions.call({ msgId, mtd, arg }, port, sock);
         }
       }),
     );
   }
   reset();
   sock.onclose = () => {
-    log?.info('lost ws connection');
     reset();
   };
   sock.addEventListener('message', wsMessage);
@@ -62,9 +77,10 @@ export default function apiWorker({ transport: customTransport, url, log }) {
           payload,
           port,
           await connect(url ?? location.origin.replace(/^http/, 'ws'), log),
+          log,
         );
       } catch (ex) {
-        console.error(ex);
+        log?.error?.(ex);
       }
     };
     port.start();
