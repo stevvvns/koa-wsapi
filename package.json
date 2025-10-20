@@ -1,13 +1,18 @@
 {
-  "name": "koa-wsapi",
+  "name": "@stevvvns/koa-wsapi",
   "type": "module",
-  "version": "1.0.0",
-  "main": "index.js",
+  "version": "0.0.3",
   "author": "",
   "license": "MIT",
   "description": "",
+  "main": "dist/index.mjs",
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "npx esbuild --bundle --format=esm --platform=node --outdir=dist/ --minify src/index.js src/transports/*.js; npx esbuild --bundle --format=esm --platform=browser --outdir=dist/client --minify client/src/*.js client/src/transports/*.js",
+    "pub": "npm run build && npm publish --access=public",
     "lint": "npx eslint src client/src example/*.js example/client/*.js --fix; npx prettier src client/src example/*.js example/client/*.js --single-quote --write"
   },
   "devDependencies": {

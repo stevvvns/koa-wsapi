@@ -1,7 +1,7 @@
 import start from '../../client/src';
 const api = start({
   // this is the default
-  worker: './worker.mjs',
+  worker: './worker.js',
   log: console,
 });
 

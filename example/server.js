@@ -1,5 +1,4 @@
 import Koa from 'koa';
-import http from 'node:http';
 import serve from 'koa-static';
 import attachActions from '../src/index.js';
 import * as signedMsgpack from '../src/transports/signed-msgpack.js';

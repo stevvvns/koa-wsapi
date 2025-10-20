@@ -47,7 +47,6 @@ export default async function attach({ app, path, transport, log }) {
     }
     const ws = await ctx.ws();
     ctx.req.socket.ignoreTimeout = true;
-    log?.info?.('got connection');
     ws.on('message', async (msg) => {
       const [data, transportCtx] = await (async () => {
         try {

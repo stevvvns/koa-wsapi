@@ -20,7 +20,7 @@ export default function start({ worker: workerUrl, log, ws: wsUrl }) {
     };
   }
   const worker = new SharedWorker(
-    new URL(workerUrl ?? './worker.mjs', import.meta.url),
+    new URL(workerUrl ?? './worker.js', import.meta.url),
     { type: 'module' },
   );
   worker.onerror = log?.error ? log.error : () => {};
