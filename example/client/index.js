@@ -9,9 +9,11 @@ const api = start({
 api.hello.memoize();
 
 addEventListener('DOMContentLoaded', async () => {
+  const ticksEl = document.createElement('p');
   const dl = document.createElement('dl');
   dl.style.fontFamily = 'monospace';
   document.body.appendChild(dl);
+  document.body.appendChild(ticksEl);
   for (const [mtd, arg] of [
     ['hi', { name: 'world', enthusiasm: 1 }],
     ['hello', { name: 'world', enthusiasm: 1 }],
@@ -35,4 +37,6 @@ addEventListener('DOMContentLoaded', async () => {
     dl.appendChild(dt);
     dl.appendChild(dd);
   }
+  // push events
+  api.tick.subscribe({}, ({ ticks }) => (ticksEl.textContent = ticks));
 });

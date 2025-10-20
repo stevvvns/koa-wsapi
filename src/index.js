@@ -3,6 +3,9 @@ import websocket from 'koa-easy-ws';
 import * as msgpack from './transports/msgpack.js';
 import { isLeft } from 'fp-ts/lib/Either.js';
 import { PathReporter } from 'io-ts/lib/PathReporter.js';
+import pubsub from './pubsub.js';
+import { v4 as uuid } from 'uuid';
+import process from 'node:process';
 import _ from 'lodash';
 
 const { mapKeys, mapValues, camelCase } = _;
@@ -30,6 +33,14 @@ export class PublicError extends Error {}
 const actions = {};
 
 export default async function attach({ app, path, transport, log }) {
+  if (!transport) {
+    transport = msgpack;
+  }
+  const channels = await pubsub({
+    redisUrl: process.env.REDIS_URL,
+    transport,
+    log,
+  });
   log?.info?.(`loading actions from ${path}`);
   for (const file of readdirSync(path).filter((file) => /[.]js$/.test(file))) {
     const { arg, default: impl } = await import(`${path}/${file}`);
@@ -39,9 +50,6 @@ export default async function attach({ app, path, transport, log }) {
     log?.info?.(`\t${impl.name}(${arg.name})`);
     actions[impl.name] = { arg, impl };
   }
-  if (!transport) {
-    transport = msgpack;
-  }
 
   app.use(websocket());
   app.use(async (ctx, next) => {
@@ -49,6 +57,7 @@ export default async function attach({ app, path, transport, log }) {
       return next(ctx);
     }
     const ws = await ctx.ws();
+    ws._id = uuid();
     ctx.req.socket.ignoreTimeout = true;
     ws.on('message', async (msg) => {
       const [data, transportCtx] = await (async () => {
@@ -88,10 +97,12 @@ export default async function attach({ app, path, transport, log }) {
       try {
         reply(
           camelCaseBody(
-            await actions[mtd].impl(parsedArg.right, {
+            (await actions[mtd].impl(parsedArg.right, {
               ...(ctx.actionsContext ?? {}),
               ...transportCtx,
-            }),
+              channels,
+              sock: ws,
+            })) ?? {},
           ),
         );
       } catch (ex) {

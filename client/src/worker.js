@@ -6,6 +6,7 @@ let connected;
 
 const inFlight = {};
 const cache = {};
+const subscriptions = {};
 function wsMessage({ data }) {
   const [msgId, response] = transport.decode(data);
   if (msgId in inFlight) {
@@ -16,10 +17,15 @@ function wsMessage({ data }) {
     cache[cache[msgId].mtd][cache[msgId].key] = response;
     delete cache[msgId];
   }
+  if (msgId in subscriptions) {
+    for (const port of subscriptions[msgId]) {
+      port.postMessage([msgId, response]);
+    }
+  }
 }
 
 const actions = {
-  async call({ msgId, mtd, arg }, port, sock, log) {
+  async call({ msgId, mtd, arg, isSubscription }, port, sock, log) {
     if (mtd in cache) {
       const key = msgpack.encode(arg).toBase64();
       if (key in cache[mtd]) {
@@ -36,6 +42,17 @@ const actions = {
     if (!cache[mtd]) {
       cache[mtd] = {};
     }
+  },
+  subscribe(channel, port) {
+    if (!(channel in subscriptions)) {
+      subscriptions[channel] = [];
+    }
+    subscriptions[channel].push(port);
+  },
+  unsubscribe(channel, port) {
+    subscriptions[channel] = subscriptions[channel].filter(
+      (other) => other !== port,
+    );
   },
 };
 
@@ -89,6 +106,7 @@ export default function apiWorker({ transport: customTransport, url, log }) {
   return (evt) => {
     const port = evt.ports[0];
     port.onmessage = async ({ data: [action, payload] }) => {
+      console.log({ action, payload });
       try {
         await actions[action](payload, port, await connect(url, log), log);
       } catch (ex) {

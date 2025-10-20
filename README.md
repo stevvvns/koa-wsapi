@@ -1,10 +1,10 @@
 # koa-wsapi
 
 ## What?
-A system for publishing type-safe APIs over a websocket using [Koa](https://github.com/gcanti/io-ts) and [io-ts](https://github.com/gcanti/io-ts).
+A system for publishing type-safe RPC and pub-sub over a websocket using [Koa](https://github.com/gcanti/io-ts) and [io-ts](https://github.com/gcanti/io-ts).
 
 ## Why?
-You want a simple way to do RPC type stuff in your JS app and would like declarative checking of client parameters to simplify validation.
+You want a websocket API and would like declarative checking of client parameters to simplify validation.
 
 ## How?
 Check the [example app](./example).
@@ -92,3 +92,29 @@ await api.hello({ name: 'world', enthusiasm: 2 });
 await api.hello({ enthusiasm: 4 });
 // {"error":["Invalid value undefined supplied to : { name: string, enthusiasm: enthusiasm }/name: string","Invalid value 4 supplied to : { name: string, enthusiasm: enthusiasm }/enthusiasm: enthusiasm"]}
 ```
+
+### pub-sub
+
+Consider an action, `tick.js`:
+
+```javascript
+import * as t from 'io-ts';
+
+export const arg = t.type({});
+
+let interval;
+export default function tick(_, { channels, sock }) {
+  if (!interval) {
+    let ticks = 0;
+    interval = setInterval(() => channels.pub('tick', { ticks: ++ticks }), 1000);
+  }
+  channels.connectSocket('tick', sock);
+}
+```
+
+The client can now call:
+```javascript
+const unsubscribe = api.tick.subscribe({}, console.log)
+```
+
+Which will log incrementing `{ ticks: N }` every second until `unsubscribe` is called.

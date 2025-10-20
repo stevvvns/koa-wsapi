@@ -23,6 +23,7 @@ export default function start({ worker: workerUrl, log, ws: wsUrl, initMsg }) {
     { type: 'module' },
   );
   worker.onerror = log?.error ? log.error : () => {};
+  const subscriptions = {};
   worker.port.onmessage = ({ data: [msgId, response] }) => {
     msgLog(msgId, null, response);
     if (msgId in inFlight) {
@@ -32,6 +33,11 @@ export default function start({ worker: workerUrl, log, ws: wsUrl, initMsg }) {
         inFlight[msgId].resolve(response);
       }
       delete inFlight[msgId];
+    }
+    if (msgId in subscriptions) {
+      for (const fn of subscriptions[msgId]) {
+        fn(response);
+      }
     }
   };
   worker.port.start();
@@ -51,6 +57,25 @@ export default function start({ worker: workerUrl, log, ws: wsUrl, initMsg }) {
           });
         rv.memoize = () => {
           worker.port.postMessage(['memoize', mtd]);
+        };
+        rv.subscribe = (arg = {}, cbOrRef) => {
+          if (!(mtd in subscriptions)) {
+            subscriptions[mtd] = [];
+          }
+          worker.port.postMessage(['subscribe', mtd]);
+          const fn =
+            typeof cbOrRef === 'function'
+              ? cbOrRef
+              : (next) => (cbOrRef.value = next);
+          subscriptions[mtd].push(fn);
+          rv(arg, true);
+
+          return () => {
+            subscriptions[mtd] = subscriptions[mtd].filter(
+              (other) => other !== fn,
+            );
+            worker.port.postMessage(['unsubscribe', mtd]);
+          };
         };
         return rv;
       },

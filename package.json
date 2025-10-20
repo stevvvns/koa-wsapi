@@ -1,11 +1,16 @@
 {
   "name": "@stevvvns/koa-wsapi",
   "type": "module",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "author": "",
   "license": "MIT",
   "description": "",
   "main": "src/index.js",
+  "files": [
+    "src",
+    "dist",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "npx esbuild --bundle --format=esm --platform=browser --outdir=dist/client --minify client/src/*.js client/src/transports/*.js",
     "pub": "npm run build && npm publish --access=public",
@@ -17,11 +22,13 @@
     "koa-static": "^5.0.0"
   },
   "dependencies": {
+    "@redis/client": "^5.8.3",
     "fp-ts": "^2.16.11",
     "io-ts": "^2.2.22",
     "koa-easy-ws": "^2.1.0",
     "lodash": "^4.17.21",
     "msgpack5": "^6.0.2",
-    "tweetnacl": "^1.0.3"
+    "tweetnacl": "^1.0.3",
+    "uuid": "^13.0.0"
   }
 }
