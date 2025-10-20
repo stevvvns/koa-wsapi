@@ -1,7 +1,7 @@
 import { v4 as uuid } from 'uuid';
 const inFlight = {};
 
-export default function start({ worker: workerUrl, log, ws: wsUrl }) {
+export default function start({ worker: workerUrl, log, ws: wsUrl, initMsg }) {
   log?.info?.('start', workerUrl);
   let msgLog = () => {};
   if (log?.debug) {
@@ -36,6 +36,9 @@ export default function start({ worker: workerUrl, log, ws: wsUrl }) {
     }
   };
   worker.port.start();
+  if (initMsg) {
+    worker.port.postMessage(initMsg);
+  }
   return new Proxy(
     {},
     {
