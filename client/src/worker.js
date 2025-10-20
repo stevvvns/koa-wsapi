@@ -47,15 +47,17 @@ function connect(url, log) {
   sock.binaryType = 'arraybuffer';
   sock.onerror = log?.error ? log.error : () => {};
   function reset() {
-    connected = new Promise((resolve) =>
-      sock.addEventListener('open', () => {
+    connected = new Promise((resolve) => {
+      const onOpen = () => {
         resolve(sock);
         for (const [msgId, { port, mtd, arg }] of Object.entries(inFlight)) {
           log?.info(`retrying in-flight ${msgId}`);
           actions.call({ msgId, mtd, arg }, port, sock);
         }
-      }),
-    );
+        sock.removeEventListener('open', onOpen);
+      };
+      sock.addEventListener('open', onOpen);
+    });
   }
   reset();
   sock.onclose = () => {
@@ -65,24 +67,35 @@ function connect(url, log) {
   return connected;
 }
 
+export function initializer(callback) {
+  let worker;
+  return (evt) => {
+    evt.ports[0].onmessage = ({ data }) => {
+      if (!worker) {
+        worker = apiWorker(callback(data));
+        worker(evt);
+      }
+    };
+  };
+}
+
 export default function apiWorker({ transport: customTransport, url, log }) {
   if (customTransport) {
     transport = customTransport;
+  }
+  if (!url) {
+    url = location.origin.replace(/^http/, 'ws');
   }
   return (evt) => {
     const port = evt.ports[0];
     port.onmessage = async ({ data: [action, payload] }) => {
       try {
-        await actions[action](
-          payload,
-          port,
-          await connect(url ?? location.origin.replace(/^http/, 'ws'), log),
-          log,
-        );
+        await actions[action](payload, port, await connect(url, log), log);
       } catch (ex) {
         log?.error?.(ex);
       }
     };
+    connect(url, log);
     port.start();
   };
 }

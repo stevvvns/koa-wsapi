@@ -30,9 +30,12 @@ export class PublicError extends Error {}
 const actions = {};
 
 export default async function attach({ app, path, transport, log }) {
-  log?.info?.(`loading action from ${path}`);
+  log?.info?.(`loading actions from ${path}`);
   for (const file of readdirSync(path).filter((file) => /[.]js$/.test(file))) {
     const { arg, default: impl } = await import(`${path}/${file}`);
+    if (impl.name in actions) {
+      throw new Error(`duplicate action name ${impl.name}`);
+    }
     log?.info?.(`\t${impl.name}(${arg.name})`);
     actions[impl.name] = { arg, impl };
   }
@@ -63,7 +66,12 @@ export default async function attach({ app, path, transport, log }) {
         typeof data[1] !== 'string' ||
         data[2].constructor !== Object
       ) {
-        ws.send(transport.encode([null, { error: 'transport error' }]));
+        ws.send(
+          transport.encode([
+            Array.isArray(data) && typeof data[0] === 'string' ? data[0] : null,
+            { error: 'transport error' },
+          ]),
+        );
         return;
       }
       const [msgId, mtd, arg] = data;

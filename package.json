@@ -1,32 +1,27 @@
 {
   "name": "@stevvvns/koa-wsapi",
   "type": "module",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "author": "",
   "license": "MIT",
   "description": "",
-  "main": "dist/index.js",
-  "files": [
-    "dist",
-    "LICENSE"
-  ],
+  "main": "src/index.js",
   "scripts": {
-    "build": "npx esbuild --bundle --format=esm --platform=node --outdir=dist/ --minify src/index.js src/transports/*.js; npx esbuild --bundle --format=esm --platform=browser --outdir=dist/client --minify client/src/*.js client/src/transports/*.js",
+    "build": "npx esbuild --bundle --format=esm --platform=browser --outdir=dist/client --minify client/src/*.js client/src/transports/*.js",
     "pub": "npm run build && npm publish --access=public",
     "lint": "npx eslint src client/src example/*.js example/client/*.js --fix; npx prettier src client/src example/*.js example/client/*.js --single-quote --write"
   },
   "devDependencies": {
     "eslint": "^9.38.0",
     "koa": "^3.0.2",
-    "koa-easy-ws": "^2.1.0",
-    "koa-static": "^5.0.0",
-    "prettier": "^3.6.2",
-    "tweetnacl": "^1.0.3"
+    "koa-static": "^5.0.0"
   },
   "dependencies": {
     "fp-ts": "^2.16.11",
     "io-ts": "^2.2.22",
+    "koa-easy-ws": "^2.1.0",
     "lodash": "^4.17.21",
-    "msgpack5": "^6.0.2"
+    "msgpack5": "^6.0.2",
+    "tweetnacl": "^1.0.3"
   }
 }
