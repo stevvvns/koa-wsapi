@@ -70,12 +70,15 @@ export default function start({ worker: workerUrl, log, ws: wsUrl, initMsg }) {
           subscriptions[mtd].push(fn);
           rv(arg, true);
 
-          return () => {
-            subscriptions[mtd] = subscriptions[mtd].filter(
-              (other) => other !== fn,
-            );
-            worker.port.postMessage(['unsubscribe', mtd]);
-          };
+          return [
+            rv(arg, true),
+            () => {
+              subscriptions[mtd] = subscriptions[mtd].filter(
+                (other) => other !== fn,
+              );
+              worker.port.postMessage(['unsubscribe', mtd]);
+            },
+          ];
         };
         return rv;
       },

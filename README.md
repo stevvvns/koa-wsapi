@@ -1,7 +1,7 @@
 # koa-wsapi
 
 ## What?
-A system for publishing type-safe RPC and pub-sub over a websocket using [Koa](https://github.com/gcanti/io-ts) and [io-ts](https://github.com/gcanti/io-ts).
+A system for publishing type-safe RPC and pub-sub over a websocket using [Koa](https://github.com/gcanti/io-ts), [Redis](https://github.com/redis/redis) and [io-ts](https://github.com/gcanti/io-ts).
 
 ## Why?
 You want a websocket API and would like declarative checking of client parameters to simplify validation.
@@ -53,6 +53,8 @@ await attachActions({
   log: { info: console.info, error: console.error },
   // by default this uses msgpack, you can use signed msgpack if it's useful to you to have unique identifiers for each client
   transport: signedMsgpack,
+  // set to false to disable pub-sub, omit to use this default
+  redis: 'redis://localhost:6379'
 });
 
 // put anything you need here that you want available to your actions that you can't/don't want to import separately
@@ -65,7 +67,7 @@ On the client side, there are two parts, your main thread app:
 ```javascript
 const api = start({
   // this is the default
-  worker: './worker.mjs',
+  worker: './worker.js',
   log: console,
 });
 
@@ -90,7 +92,10 @@ after which:
 await api.hello({ name: 'world', enthusiasm: 2 });
 // {"message":"Hello, world! (and hello, 9VEllJ9pbQeaP4dFgffFqxUnv1OVvm8CS3kFCU68ZPQ=!)"}
 await api.hello({ enthusiasm: 4 });
-// {"error":["Invalid value undefined supplied to : { name: string, enthusiasm: enthusiasm }/name: string","Invalid value 4 supplied to : { name: string, enthusiasm: enthusiasm }/enthusiasm: enthusiasm"]}
+// {"error":[
+//    "Invalid value undefined supplied to : { name: string, enthusiasm: enthusiasm }/name: string",
+//    "Invalid value 4 supplied to : { name: string, enthusiasm: enthusiasm }/enthusiasm: enthusiasm"
+// ]}
 ```
 
 ### pub-sub
@@ -114,7 +119,7 @@ export default function tick(_, { channels, sock }) {
 
 The client can now call:
 ```javascript
-const unsubscribe = api.tick.subscribe({}, console.log)
+const [result, unsubscribe] = api.tick.subscribe({}, console.log)
 ```
 
 Which will log incrementing `{ ticks: N }` every second until `unsubscribe` is called.

@@ -5,7 +5,6 @@ import { isLeft } from 'fp-ts/lib/Either.js';
 import { PathReporter } from 'io-ts/lib/PathReporter.js';
 import pubsub from './pubsub.js';
 import { v4 as uuid } from 'uuid';
-import process from 'node:process';
 import _ from 'lodash';
 
 const { mapKeys, mapValues, camelCase } = _;
@@ -32,15 +31,18 @@ export class PublicError extends Error {}
 
 const actions = {};
 
-export default async function attach({ app, path, transport, log }) {
+export default async function attach({ app, path, transport, log, redis }) {
   if (!transport) {
     transport = msgpack;
   }
-  const channels = await pubsub({
-    redisUrl: process.env.REDIS_URL,
-    transport,
-    log,
-  });
+  const channels =
+    redis === false
+      ? null
+      : await pubsub({
+          redisUrl: redis,
+          transport,
+          log,
+        });
   log?.info?.(`loading actions from ${path}`);
   for (const file of readdirSync(path).filter((file) => /[.]js$/.test(file))) {
     const { arg, default: impl } = await import(`${path}/${file}`);
