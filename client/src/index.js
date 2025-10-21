@@ -68,7 +68,6 @@ export default function start({ worker: workerUrl, log, ws: wsUrl, initMsg }) {
               ? cbOrRef
               : (next) => (cbOrRef.value = next);
           subscriptions[mtd].push(fn);
-          rv(arg, true);
 
           return [
             rv(arg, true),
