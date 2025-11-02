@@ -1,4 +1,17 @@
 import { v4 as uuid } from 'uuid';
+
+export function toB64(u8) {
+  return btoa(u8.reduce((data, byte) => data + String.fromCharCode(byte), ''));
+}
+
+export function toU8(b64) {
+  return new Uint8Array(
+    atob(b64)
+      .split('')
+      .map((ch) => ch.charCodeAt(0)),
+  );
+}
+
 const inFlight = {};
 
 export default function start({ worker: workerUrl, log, ws: wsUrl, initMsg }) {
